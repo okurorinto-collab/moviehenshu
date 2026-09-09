@@ -47,11 +47,17 @@
   .tl{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;scroll-snap-type:x proximity}
   .tl::-webkit-scrollbar{display:none}
   .cl{position:relative;flex:0 0 auto;width:66px;height:88px;border-radius:12px;overflow:hidden;background:var(--s3);border:2px solid transparent;scroll-snap-align:start;cursor:pointer}
-  .cl img{width:100%;height:100%;object-fit:cover;display:block}
+  .cl img{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;user-select:none;pointer-events:none}
+  .cl{-webkit-touch-callout:none;user-select:none;touch-action:pan-x}
   .cl.sel{border-color:var(--ac)}
   .cl .n{position:absolute;top:5px;left:6px;font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
   .cl .s{position:absolute;right:5px;bottom:5px;font-size:11px;font-weight:600;background:var(--ac);color:var(--acink);padding:2px 6px;border-radius:6px}
   .cl.ld img{opacity:.3}
+  .cl.dragging{opacity:.25;border-style:dashed;border-color:var(--ac)}
+  .ghost{position:fixed;z-index:50;width:66px;height:88px;border-radius:12px;overflow:hidden;pointer-events:none;box-shadow:0 12px 30px rgba(0,0,0,.5);transform:scale(1.08);border:2px solid var(--ac)}
+  .ghost img{width:100%;height:100%;object-fit:cover;display:block}
+  .tl.drag-on{scroll-snap-type:none}
+  .tl-head .hint{color:var(--mu)}
   .cl .sp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
   .cl .sp i{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite}
   .cl.add{border:1.5px dashed rgba(255,255,255,.18);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--mu);font-size:26px;font-weight:300}
@@ -110,6 +116,12 @@
   .panel>:last-child{padding-bottom:0}
   .lbl{display:flex;align-items:center;gap:8px}
   .lbl .i{width:18px;height:18px;color:var(--ac);flex:0 0 auto}
+  .desc{margin:0 2px;font-size:12px;color:var(--mu);line-height:1.6}
+  .desc:empty{display:none}
+  .seg.tiles{flex:1 1 100%;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--s2);border-radius:12px;padding:6px;margin-left:0}
+  .seg.tiles button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 8px 12px;border-radius:10px;border:1.5px solid transparent;background:transparent;color:var(--mu);font-size:15px;font-weight:600}
+  .seg.tiles button svg{width:32px;height:32px}
+  .seg.tiles button.on{background:rgba(218,239,139,.16);border-color:var(--ac);color:var(--ac)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .sw{position:relative;width:48px;height:28px;flex:0 0 auto}
   .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
@@ -144,7 +156,7 @@
   </div></div>
 
   <section class="tl-wrap">
-    <div class="tl-head"><span><b id="count">0</b> 本</span><span>左から順につながります</span></div>
+    <div class="tl-head"><span><b id="count">0</b> 本</span><span class="hint">長押しでドラッグして並べ替え</span></div>
     <div class="tl-empty" id="tlEmpty">
       <label class="cl add">＋<input type="file" accept="video/*" multiple id="file0"></label>
       <p>動画をまとめて選ぶと<br>冒頭だけ切り出して1本にします</p>
@@ -175,19 +187,19 @@
   <section class="panel">
     <h3 class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17" fill="currentColor" opacity=".35" stroke="none"/></svg>色</h3>
     <div class="field"><label class="lbl"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="10" r="5.5"/><circle cx="15" cy="10" r="5.5"/><circle cx="12" cy="15" r="5.5"/></svg><span>フィルター</span><span class="rangeTgl" style="margin-left:auto"><input id="autoCC" type="checkbox" checked><span>自動補正</span></span></label><div class="chips" id="filters"></div></div>
+    <div class="err" id="fWarn" style="margin:0 0 14px;background:#2A2618;color:#E8D9A0"></div>
     <button class="more" id="moreF" type="button">詳細調整<span>▾</span></button>
     <div id="fAdv" style="display:none">
     <div class="row"><div class="lb"><span>コントラスト</span></div><div class="rng"><input id="fCon" type="range" min="60" max="160" value="100"><output id="fConOut">100</output></div></div>
     <div class="row"><div class="lb"><span>明るさ</span></div><div class="rng"><input id="fBri" type="range" min="60" max="140" value="100"><output id="fBriOut">100</output></div></div>
     <div class="row"><div class="lb"><span>彩度</span></div><div class="rng"><input id="fSat" type="range" min="0" max="200" value="100"><output id="fSatOut">100</output></div></div>
     </div>
-    <div class="field"><label class="lbl"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3.5 15 8.5M20.4 12l-5.4 2.6M13.5 20.3 10.5 15.5M3.6 12l5.4-2.6" opacity=".6"/></svg><span>レンズ効果</span><small style="margin-left:auto">複数選べます</small></label><div class="chips" id="lens"></div></div>
-    <div class="err" id="fWarn" style="margin-top:8px;background:#2A2618;color:#E8D9A0"></div>
+    <div class="field"><label class="lbl"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3.5 15 8.5M20.4 12l-5.4 2.6M13.5 20.3 10.5 15.5M3.6 12l5.4-2.6" opacity=".6"/></svg><span>レンズ効果</span><small style="margin-left:auto">複数選べます</small></label><div class="chips" id="lens"></div><p class="desc" id="lensDesc"></p></div>
   </section>
 
   <section class="panel">
     <h3 class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="11" height="12" rx="2"/><rect x="10" y="6" width="11" height="12" rx="2" opacity=".5"/></svg>つなぎ方</h3>
-    <div class="field"><div class="chips" id="trans"></div></div>
+    <div class="field"><div class="chips" id="trans"></div><p class="desc" id="transDesc"></p></div>
   </section>
 
   <h2 class="h">基本設定</h2>
@@ -195,7 +207,7 @@
     <div class="row"><div class="lb"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8.5"/></svg><span>1本あたり<small>全クリップに適用</small></span></div>
       <div class="seg" id="len"><button data-v="1">1秒</button><button data-v="2">2秒</button><button data-v="3" class="on">3秒</button></div></div>
     <div class="row"><div class="lb"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 12h18M12 5v14" opacity=".45"/></svg><span>サイズ</span></div>
-      <div class="seg" id="ratio"><button data-v="16:9">16:9</button><button data-v="9:16" class="on">9:16</button><button data-v="1:1">1:1</button></div></div>
+      <div class="seg tiles" id="ratio"><button data-v="16:9"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4.0" y="9.0" width="24" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>16:9</span></button><button data-v="9:16" class="on"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9.0" y="4.0" width="14" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>9:16</span></button><button data-v="1:1"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6.0" y="6.0" width="20" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>1:1</span></button></div></div>
     <div class="row"><div class="lb"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M9 9h6v6H9z"/><path d="M9 9 6 6M15 9l3-3M9 15l-3 3M15 15l3 3" opacity=".6"/></svg><span>収め方<small>Fill＝画面いっぱい／Fit＝全体表示</small></span></div>
       <div class="seg" id="fit"><button data-v="fill" class="on">Fill</button><button data-v="fit">Fit</button></div></div>
     <div class="row"><div class="lb"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>日付を入れる</span></div><label class="sw"><input id="showDate" type="checkbox" checked><i></i></label></div>
@@ -231,10 +243,10 @@ const TAGS=[['','なし'],['✈️','TRIP'],['🎬','VLOG'],['☀️','DAILY'],[
 let tagEmoji='';
 const FILTERS=[['なし',{c:100,b:100,s:100,x:''}],['くっきり',{c:118,b:102,s:110,x:''}],['ビビッド',{c:108,b:100,s:150,x:''}],['淡い',{c:88,b:108,s:85,x:''}],['フィルム',{c:106,b:96,s:90,x:'sepia(0.28)'}],['クール',{c:108,b:100,s:95,x:'hue-rotate(-8deg)'}],['モノクロ',{c:112,b:100,s:0,x:''}]];
 let fx='';
-const LENS=[['vig','ビネット'],['grain','グレイン'],['ca','色収差'],['glow','ソフトグロー'],['leak','ライトリーク']];
+const LENS=[['vig','ビネット','四隅をふわっと暗く落として、中心に視線を集めます'],['grain','グレイン','フィルムのようなザラつき。毎フレーム動きます'],['ca','色収差','輪郭の端に赤とシアンがにじむ、オールドレンズの味'],['glow','ソフトグロー','明るい部分がやわらかく滲む、夢っぽい質感'],['leak','ライトリーク','右上から暖色の光が漏れ込むフィルム風エフェクト']];
 const lens=new Set();
-LENS.forEach(([k,n])=>{const b=document.createElement('button');b.textContent=n;
-  b.onclick=()=>{lens.has(k)?lens.delete(k):lens.add(k);b.classList.toggle('on',lens.has(k));previewDraw();};$('lens').appendChild(b);});
+LENS.forEach(([k,n,d])=>{const b=document.createElement('button');b.textContent=n;
+  b.onclick=()=>{lens.has(k)?lens.delete(k):lens.add(k);b.classList.toggle('on',lens.has(k));$('lensDesc').textContent=lens.has(k)?d:(lens.size?`${[...lens].map(x=>LENS.find(y=>y[0]===x)[1]).join('・')} をON`:'');previewDraw();};$('lens').appendChild(b);});
 // グレイン用ノイズ
 const noise=document.createElement('canvas');noise.width=noise.height=256;
 {const nc=noise.getContext('2d'),im=nc.createImageData(256,256);for(let i=0;i<im.data.length;i+=4){const v=128+(Math.random()-0.5)*160;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}nc.putImageData(im,0,0);}
@@ -257,10 +269,10 @@ function applyLens(v,o){
   if(lens.has('vig')){const g=ctx.createRadialGradient(W/2,H/2,base*0.35,W/2,H/2,Math.hypot(W,H)/2);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');ctx.save();ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore();}
 }
 function drawRaw(v,o,ox,oy){const {img,g}=source(v,o);ctx.drawImage(img,g.x+ox,g.y+oy,g.w,g.h);}
-const TRANS=[['none','なし'],['cross','クロスフェード'],['black','フェード'],['white','フラッシュ'],['slide','スライド'],['zoom','ズーム']];
+const TRANS=[['none','なし','カットでそのまま切り替わります'],['cross','クロスフェード','前の映像が溶けて次に重なる、いちばん自然なつなぎ（0.4秒重なるので少し短くなります）'],['black','フェード','いちど黒に沈んでから次が浮かび上がる。落ち着いた雰囲気に'],['white','フラッシュ','白く飛んで切り替わる。Vlogっぽいテンポ感が出ます'],['slide','スライド','次の映像が右から押し出してくる（0.4秒重なるので少し短くなります）'],['zoom','ズーム','各クリップの頭で少し寄った状態から引く。テンポと勢いが出ます']];
 let trans='none';
-TRANS.forEach(([k,n],i)=>{const b=document.createElement('button');b.textContent=n;b.className=i===0?'on':'';
-  b.onclick=()=>{[...$('trans').children].forEach(x=>x.classList.remove('on'));b.classList.add('on');trans=k;render();};
+TRANS.forEach(([k,n,d],i)=>{const b=document.createElement('button');b.textContent=n;b.className=i===0?'on':'';
+  b.onclick=()=>{[...$('trans').children].forEach(x=>x.classList.remove('on'));b.classList.add('on');trans=k;$('transDesc').textContent=d;render();};
   $('trans').appendChild(b);});
 const OV=()=> (trans==='cross'||trans==='slide')?0.4:0;
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
@@ -347,19 +359,65 @@ function render(){
     const el=document.createElement('div');
     el.className='cl'+(i===selected?' sel':'')+(c.ready?'':' ld');
     el.innerHTML=`<img src="${c.thumb}" alt=""><span class="n">${i+1}</span>${c.ready?`<span class="s">${Math.min(c.len,c.dur).toFixed(0)}s</span>`:'<div class="sp"><i></i></div>'}`;
-    el.onclick=()=>{selected=i;render();previewDraw();};
+    el.dataset.idx=i;
+    el.onclick=()=>{if(dragJustEnded)return;selected=i;render();previewDraw();};
     tl.appendChild(el);
   });
   const add=document.createElement('label');add.className='cl add';
   add.innerHTML='＋<input type="file" accept="video/*" multiple>';
   add.querySelector('input').onchange=e=>onFiles(e.target);
   tl.appendChild(add);
-  if(selected>=0&&tl.children[selected]) tl.children[selected].scrollIntoView({inline:'nearest',block:'nearest'});
+  if(selected>=0&&tl.children[selected]&&render.lastSel!==selected){const el=tl.children[selected],l=el.offsetLeft-tl.offsetLeft,r=l+el.offsetWidth;
+    if(l<tl.scrollLeft)tl.scrollTo({left:l-8,behavior:'smooth'});else if(r>tl.scrollLeft+tl.clientWidth)tl.scrollTo({left:r-tl.clientWidth+8,behavior:'smooth'});}
+  render.lastSel=selected;
 
   const c=clips[selected];
   $('insp').classList.toggle('show',!!c);
   if(c){
-    $('lenSeg').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',+b.dataset.v===c.len);b.disabled=c.dur&&c.dur<+b.dataset.v;});
+    /* ドラッグで並べ替え（長押し） */
+let drag=null, dragJustEnded=false;
+const tlEl=$('tl');
+tlEl.addEventListener('pointerdown',e=>{
+  const el=e.target.closest('.cl');if(!el||el.classList.contains('add')||recording||playing)return;
+  drag={el,sx:e.clientX,sy:e.clientY,active:false,ghost:null,timer:setTimeout(()=>startDrag(e),220)};
+});
+function startDrag(e){
+  if(!drag)return;drag.active=true;const r=drag.el.getBoundingClientRect();
+  drag.ox=e.clientX-r.left;drag.oy=e.clientY-r.top;
+  const g=document.createElement('div');g.className='ghost';g.innerHTML=drag.el.querySelector('img').outerHTML;
+  g.style.left=r.left+'px';g.style.top=r.top+'px';document.body.appendChild(g);drag.ghost=g;
+  drag.el.classList.add('dragging');tlEl.classList.add('drag-on');
+  if(navigator.vibrate)navigator.vibrate(12);
+}
+function moveDrag(e){
+  const g=drag.ghost;g.style.left=(e.clientX-drag.ox)+'px';g.style.top=(e.clientY-drag.oy)+'px';
+  const tr=tlEl.getBoundingClientRect();
+  if(e.clientX<tr.left+40)tlEl.scrollLeft-=12;else if(e.clientX>tr.right-40)tlEl.scrollLeft+=12;
+  const items=[...tlEl.querySelectorAll('.cl:not(.add)')].filter(x=>x!==drag.el);
+  let target=null;for(const it of items){const rr=it.getBoundingClientRect();if(e.clientX<rr.left+rr.width/2){target=it;break;}}
+  if(target){if(target!==drag.el.nextSibling)tlEl.insertBefore(drag.el,target);}
+  else{const add=tlEl.querySelector('.cl.add');if(drag.el.nextSibling!==add)tlEl.insertBefore(drag.el,add);}
+}
+function endDrag(){
+  if(!drag)return;clearTimeout(drag.timer);
+  if(drag.active){
+    const order=[...tlEl.querySelectorAll('.cl:not(.add)')].map(x=>clips[+x.dataset.idx]);
+    const cur=clips[selected];clips=order;selected=clips.indexOf(cur);
+    drag.ghost.remove();drag.el.classList.remove('dragging');tlEl.classList.remove('drag-on');
+    dragJustEnded=true;setTimeout(()=>dragJustEnded=false,50);
+    render();previewDraw();
+  }
+  drag=null;
+}
+tlEl.addEventListener('pointermove',e=>{if(!drag)return;
+  if(!drag.active){if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){clearTimeout(drag.timer);drag=null;}return;}
+  moveDrag(e);});
+tlEl.addEventListener('pointerup',endDrag);tlEl.addEventListener('pointercancel',endDrag);
+tlEl.addEventListener('touchmove',e=>{if(drag&&drag.active)e.preventDefault();},{passive:false});
+tlEl.addEventListener('contextmenu',e=>{if(drag)e.preventDefault();});
+window.addEventListener('pointerup',endDrag);
+
+$('lenSeg').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',+b.dataset.v===c.len);b.disabled=c.dur&&c.dur<+b.dataset.v;});
     $('mvL').disabled=selected===0;$('mvR').disabled=selected===clips.length-1;
   }
   const tot=Math.max(0,clips.reduce((a,c)=>a+Math.min(c.len,c.dur||c.len),0)-OV()*Math.max(0,clips.length-1));
@@ -398,12 +456,12 @@ function drawVideo(v,o={}){
 function drawVeil(color,a){if(a<=0)return;ctx.save();ctx.globalAlpha=Math.min(1,a);ctx.fillStyle=color;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore();}
 function drawTitle(){
   const W=canvas.width,H=canvas.height,base=Math.min(W,H);
-  const titleSize=Math.round(base*[0.05,0.07,0.095][sizeLv-1]),dateSize=Math.round(titleSize*0.42);
+  const titleSize=Math.round(base*[0.062,0.084,0.112][sizeLv-1]),dateSize=Math.round(titleSize*0.5);
   const t=$('title').value.trim(),d=$('showDate').checked?prettyDate():'',g=tag;
   if(!t&&!d&&!g)return;
   ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';
   ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=base*0.02;ctx.shadowOffsetY=base*0.004;
-  const tagSize=Math.round(titleSize*0.36),gapS=titleSize*0.35,gapD=titleSize*0.4;
+  const tagSize=Math.round(titleSize*0.44),gapS=titleSize*0.35,gapD=titleSize*0.4;
   const total=(g?tagSize:0)+(g&&(t||d)?gapS:0)+(t?titleSize:0)+(t&&d?gapD:0)+(d?dateSize:0);
   let y=H/2-total/2;
   if(g){ctx.font=`600 ${tagSize}px ${FONT}`;const ls=tagSize*0.28;
