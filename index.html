@@ -73,9 +73,8 @@
   .ic button.del{color:#FF8A8A}
 
   /* panels */
-  .panel{background:var(--s1);border-radius:var(--r);padding:18px;margin-top:16px}
+  .panel{background:var(--s1);border-radius:var(--r);padding:18px;margin-top:12px}
   .row{display:flex;align-items:center;justify-content:space-between;gap:10px 12px;min-height:52px;flex-wrap:wrap;padding:9px 0}
-  .row+.row{border-top:1px solid var(--line)}
   .row .lb{font-size:14px;color:var(--tx);display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0}
   .row .lb .i{width:20px;height:20px;color:var(--ac);flex:0 0 auto}
   .row .seg,.row .sw{margin-left:auto}
@@ -95,10 +94,22 @@
   .rng input{flex:1;accent-color:var(--ac);margin:0;min-width:80px}
   .rng output{font-size:13px;color:var(--mu);width:34px;text-align:right}
   .seg.mini{padding:2px}.seg.mini button{font-size:12px;padding:5px 10px;border-radius:8px}
-  .h{font-size:12px;font-weight:600;color:var(--mu);letter-spacing:.06em;margin:26px 4px 10px}
+  .h{font-size:19px;font-weight:700;color:var(--tx);letter-spacing:.01em;margin:32px 2px 12px}
   .h:first-of-type{margin-top:20px}
   .more{width:100%;display:flex;justify-content:space-between;align-items:center;background:transparent;border:0;border-top:1px solid var(--line);color:var(--mu);font:inherit;font-size:13px;padding:14px 2px 6px;cursor:pointer}
   .more.open span{display:inline-block;transform:rotate(180deg)}
+  .ct{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;letter-spacing:.06em;margin:0 0 4px;color:var(--mu)}
+  .ct svg{width:15px;height:15px;color:var(--ac);flex:0 0 auto}
+  .ct small{font-size:11px;font-weight:400;color:var(--mu);margin-left:auto;text-align:right}
+  .panel>.field,.panel>.row,.panel>.more,.panel>#fAdv{padding-top:14px;padding-bottom:14px}
+  .panel>.field+.field,.panel>.field+.row,.panel>.row+.field,.panel>.row+.row,.panel>.more,.panel>#fAdv+.field{border-top:1px solid var(--line)}
+  .panel>.more{border-top:1px solid var(--line);padding:12px 2px}
+  .panel>#fAdv{padding-top:0}
+  .panel>#fAdv .row{padding:8px 0}
+  .panel>.ct+.field,.panel>.ct+.row{border-top:0}
+  .panel>:last-child{padding-bottom:0}
+  .lbl{display:flex;align-items:center;gap:8px}
+  .lbl .i{width:18px;height:18px;color:var(--ac);flex:0 0 auto}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .sw{position:relative;width:48px;height:28px;flex:0 0 auto}
   .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
@@ -147,11 +158,12 @@
 
   <h2 class="h">編集</h2>
   <section class="panel">
-    <div class="field" style="margin-bottom:16px"><label>カテゴリ<small style="color:var(--mu)">（タイトルの上に小さく入ります）</small></label>
+    <h3 class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14M12 6v12M8 18h8"/></svg>タイトル</h3>
+    <div class="field"><label>カテゴリ</label>
       <div class="chips" id="tags"></div>
       <input id="tagCustom" type="text" placeholder="自由に入力（例：BIRTHDAY）" maxlength="16" style="display:none;margin-top:8px;text-transform:uppercase">
     </div>
-    <div class="field" style="margin-bottom:16px"><label style="display:flex;justify-content:space-between;align-items:center">タイトル
+    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">タイトル
         <span class="seg mini" id="size"><button data-v="1">小</button><button data-v="2" class="on">中</button><button data-v="3">大</button></span></label>
       <input id="title" type="text" placeholder="今日のできごと" maxlength="30"></div>
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">日付
@@ -161,20 +173,21 @@
   </section>
 
   <section class="panel">
-    <div class="field" style="margin-bottom:14px"><label>フィルター</label><div class="chips" id="filters"></div></div>
-    <button class="more" id="moreF" type="button">詳細調整（コントラスト・明るさ・彩度）<span>▾</span></button>
+    <h3 class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17" fill="currentColor" opacity=".35" stroke="none"/></svg>色</h3>
+    <div class="field"><label class="lbl"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="10" r="5.5"/><circle cx="15" cy="10" r="5.5"/><circle cx="12" cy="15" r="5.5"/></svg><span>フィルター</span><span class="rangeTgl" style="margin-left:auto"><input id="autoCC" type="checkbox" checked><span>自動補正</span></span></label><div class="chips" id="filters"></div></div>
+    <button class="more" id="moreF" type="button">詳細調整<span>▾</span></button>
     <div id="fAdv" style="display:none">
     <div class="row"><div class="lb"><span>コントラスト</span></div><div class="rng"><input id="fCon" type="range" min="60" max="160" value="100"><output id="fConOut">100</output></div></div>
     <div class="row"><div class="lb"><span>明るさ</span></div><div class="rng"><input id="fBri" type="range" min="60" max="140" value="100"><output id="fBriOut">100</output></div></div>
     <div class="row"><div class="lb"><span>彩度</span></div><div class="rng"><input id="fSat" type="range" min="0" max="200" value="100"><output id="fSatOut">100</output></div></div>
     </div>
-    <div class="field" style="margin-top:14px"><label>レンズ効果<small style="color:var(--mu)">（複数選べます）</small></label><div class="chips" id="lens"></div></div>
+    <div class="field"><label class="lbl"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3.5 15 8.5M20.4 12l-5.4 2.6M13.5 20.3 10.5 15.5M3.6 12l5.4-2.6" opacity=".6"/></svg><span>レンズ効果</span><small style="margin-left:auto">複数選べます</small></label><div class="chips" id="lens"></div></div>
     <div class="err" id="fWarn" style="margin-top:8px;background:#2A2618;color:#E8D9A0"></div>
   </section>
 
   <section class="panel">
-    <div class="row" style="padding:0"><div class="lb"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="11" height="12" rx="2"/><rect x="10" y="6" width="11" height="12" rx="2" opacity=".5"/><path d="M3 12h18" opacity=".35"/></svg><span>つなぎ方<small>クリップの切り替わり</small></span></div>
-      <div class="chips" id="trans" style="margin:0;padding:0;flex:1 1 100%"></div></div>
+    <h3 class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="11" height="12" rx="2"/><rect x="10" y="6" width="11" height="12" rx="2" opacity=".5"/></svg>つなぎ方</h3>
+    <div class="field"><div class="chips" id="trans"></div></div>
   </section>
 
   <h2 class="h">基本設定</h2>
@@ -243,11 +256,7 @@ function applyLens(v,o){
   if(lens.has('grain')){ctx.save();ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.55;ctx.translate(-Math.random()*256,-Math.random()*256);ctx.fillStyle=ctx.createPattern(noise,'repeat');ctx.fillRect(0,0,W+256,H+256);ctx.restore();}
   if(lens.has('vig')){const g=ctx.createRadialGradient(W/2,H/2,base*0.35,W/2,H/2,Math.hypot(W,H)/2);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');ctx.save();ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore();}
 }
-function drawRaw(v,o,ox,oy){
-  const W=canvas.width,H=canvas.height,vw=v.videoWidth,vh=v.videoHeight;
-  const s=(fitMode==='fill'?Math.max(W/vw,H/vh):Math.min(W/vw,H/vh))*(o.scale||1);const dw=vw*s,dh=vh*s;
-  ctx.drawImage(v,(W-dw)/2+(o.dx||0)+ox,(H-dh)/2+oy,dw,dh);
-}
+function drawRaw(v,o,ox,oy){const {img,g}=source(v,o);ctx.drawImage(img,g.x+ox,g.y+oy,g.w,g.h);}
 const TRANS=[['none','なし'],['cross','クロスフェード'],['black','フェード'],['white','フラッシュ'],['slide','スライド'],['zoom','ズーム']];
 let trans='none';
 TRANS.forEach(([k,n],i)=>{const b=document.createElement('button');b.textContent=n;b.className=i===0?'on':'';
@@ -274,7 +283,12 @@ TAGS.forEach(([e,t],i)=>{const b=document.createElement('button');b.textContent=
   $('tags').appendChild(b);});
 $('tagCustom').oninput=()=>{tag=$('tagCustom').value.trim().toUpperCase();previewDraw();};
 
-function setCanvasSize(){const [w,h]=SIZES[ratio];canvas.width=w;canvas.height=h;preview.style.aspectRatio=`${w}/${h}`;}
+const an=document.createElement('canvas');an.width=an.height=48;
+function sample(v){const c=an.getContext('2d',{willReadFrequently:true});c.drawImage(v,0,0,48,48);const d=c.getImageData(0,0,48,48).data;
+  let l=0,sq=0,r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=4){const R=d[i]/255,G=d[i+1]/255,B=d[i+2]/255,L=0.2126*R+0.7152*G+0.0722*B;l+=L;sq+=L*L;r+=R;g+=G;b+=B;n++;}
+  return{l:l/n,sq:sq/n,r:r/n,g:g/n,b:b/n};}
+const off=document.createElement('canvas');
+function setCanvasSize(){const [w,h]=SIZES[ratio];canvas.width=w;canvas.height=h;off.width=w;off.height=h;preview.style.aspectRatio=`${w}/${h}`;}
 setCanvasSize();
 
 /* files */
@@ -288,7 +302,21 @@ function addClip(file){
   if(clips.length===0&&file.lastModified)$('date').value=isoDate(new Date(file.lastModified));
   clips.push(c);render();
   v.onloadedmetadata=async()=>{
-    c.dur=v.duration;await seek(v,0);
+    c.dur=v.duration;
+    // 明るさ・コントラスト・ホワイトバランスを2フレームから解析
+    try{
+      const pts=[0.15,Math.min(v.duration*0.9,Math.max(0.6,Math.min(c.len,v.duration)*0.6))];
+      const acc={l:0,sq:0,r:0,g:0,b:0,n:0};
+      for(const t of pts){await seek(v,t);const st=sample(v);acc.l+=st.l;acc.sq+=st.sq;acc.r+=st.r;acc.g+=st.g;acc.b+=st.b;acc.n++;}
+      const l=acc.l/acc.n,sd=Math.sqrt(Math.max(0,acc.sq/acc.n-l*l)),r=acc.r/acc.n,g=acc.g/acc.n,b=acc.b/acc.n;
+      const mix=(x,k)=>1+(x-1)*k, clamp=(x,a,z)=>Math.min(z,Math.max(a,x));
+      const bri=clamp(mix(0.44/Math.max(0.05,l),0.7),0.7,1.5);
+      const con=clamp(mix(0.20/Math.max(0.03,sd),0.5),0.9,1.25);
+      const gray=(r+g+b)/3, gr=clamp(mix(gray/r,0.6),0.8,1.25), gg=clamp(mix(gray/g,0.6),0.8,1.25), gb=clamp(mix(gray/b,0.6),0.8,1.25);
+      const mx=Math.max(gr,gg,gb);
+      v._cc={bri:bri*mx,con,wb:`rgb(${Math.round(255*gr/mx)},${Math.round(255*gg/mx)},${Math.round(255*gb/mx)})`};
+    }catch(e){}
+    await seek(v,0);
     const t=document.createElement('canvas');t.width=128;t.height=168;
     const s=Math.max(128/v.videoWidth,168/v.videoHeight);
     t.getContext('2d').drawImage(v,(128-v.videoWidth*s)/2,(168-v.videoHeight*s)/2,v.videoWidth*s,v.videoHeight*s);
@@ -346,19 +374,31 @@ $('mvR').onclick=()=>{const i=selected;[clips[i+1],clips[i]]=[clips[i],clips[i+1
 $('del').onclick=()=>{const c=clips[selected];if(!c)return;URL.revokeObjectURL(c.video.src);clips.splice(selected,1);selected=Math.min(selected,clips.length-1);render();previewDraw();};
 
 /* draw */
+function geom(v,o){const W=canvas.width,H=canvas.height,vw=v.videoWidth,vh=v.videoHeight;
+  const s=(fitMode==='fill'?Math.max(W/vw,H/vh):Math.min(W/vw,H/vh))*(o.scale||1);const dw=vw*s,dh=vh*s;return{x:(W-dw)/2+(o.dx||0),y:(H-dh)/2,w:dw,h:dh};}
+// 自動補正を掛けたソースを返す（補正ONなら off キャンバスに焼いて返す）
+function source(v,o){
+  const cc=$('autoCC').checked&&v._cc;
+  if(!cc)return{img:v,g:geom(v,o)};
+  const W=canvas.width,H=canvas.height,oc=off.getContext('2d'),g=geom(v,o);
+  const key=`${v.src}|${v.currentTime}|${g.x}|${g.w}|${fitMode}`;
+  if(off._key===key)return{img:off,g:{x:0,y:0,w:W,h:H}};off._key=key;
+  oc.clearRect(0,0,W,H);
+  oc.filter=`brightness(${cc.bri}) contrast(${cc.con})`;oc.drawImage(v,g.x,g.y,g.w,g.h);oc.filter='none';
+  if(cc.wb!=='rgb(255,255,255)'){oc.save();oc.globalCompositeOperation='multiply';oc.fillStyle=cc.wb;oc.fillRect(g.x,g.y,g.w,g.h);oc.restore();}
+  return{img:off,g:{x:0,y:0,w:W,h:H},clip:g};
+}
 function drawVideo(v,o={}){
-  const W=canvas.width,H=canvas.height,vw=v.videoWidth,vh=v.videoHeight;
+  const W=canvas.width,H=canvas.height;
   if(!o.noClear){ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);}
-  const s=(fitMode==='fill'?Math.max(W/vw,H/vh):Math.min(W/vw,H/vh))*(o.scale||1);
-  const dw=vw*s,dh=vh*s;
-  ctx.save();ctx.globalAlpha=o.alpha==null?1:o.alpha;ctx.filter=filterStr();
-  ctx.drawImage(v,(W-dw)/2+(o.dx||0),(H-dh)/2,dw,dh);ctx.restore();
+  const {img,g}=source(v,o);
+  ctx.save();ctx.globalAlpha=o.alpha==null?1:o.alpha;ctx.filter=filterStr();ctx.drawImage(img,g.x,g.y,g.w,g.h);ctx.restore();
   if(!o.noClear&&!o.skipLens)applyLens(v,o);
 }
 function drawVeil(color,a){if(a<=0)return;ctx.save();ctx.globalAlpha=Math.min(1,a);ctx.fillStyle=color;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore();}
 function drawTitle(){
   const W=canvas.width,H=canvas.height,base=Math.min(W,H);
-  const titleSize=Math.round(base*[0.055,0.075,0.1][sizeLv-1]),dateSize=Math.round(titleSize*0.42);
+  const titleSize=Math.round(base*[0.05,0.07,0.095][sizeLv-1]),dateSize=Math.round(titleSize*0.42);
   const t=$('title').value.trim(),d=$('showDate').checked?prettyDate():'',g=tag;
   if(!t&&!d&&!g)return;
   ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';
@@ -385,7 +425,7 @@ seg('ratio',v=>{ratio=v;setCanvasSize();previewDraw();});
 seg('fit',v=>{fitMode=v;previewDraw();});
 seg('len',v=>{CLIP=+v;clips.forEach(c=>c.len=CLIP);render();});
 seg('size',v=>{sizeLv=+v;previewDraw();});
-$('title').oninput=previewDraw;$('date').oninput=previewDraw;$('date2').oninput=previewDraw;$('showDate').onchange=previewDraw;
+$('autoCC').onchange=previewDraw;$('title').oninput=previewDraw;$('date').oninput=previewDraw;$('date2').oninput=previewDraw;$('showDate').onchange=previewDraw;
 $('isRange').onchange=()=>{const on=$('isRange').checked;$('date2').style.display=on?'block':'none';if(on&&!$('date2').value)$('date2').value=$('date').value;previewDraw();};
 
 
