@@ -86,6 +86,9 @@
   .chips button.on{background:var(--ac);color:var(--acink)}
   .rangeTgl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mu);cursor:pointer}
   .rangeTgl input{width:16px;height:16px;accent-color:var(--ac);margin:0}
+  .rng{display:flex;align-items:center;gap:10px;flex:1;max-width:58%;margin-left:auto}
+  .rng input{flex:1;accent-color:var(--ac);margin:0;min-width:80px}
+  .rng output{font-size:13px;color:var(--mu);width:34px;text-align:right}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .sw{position:relative;width:48px;height:28px;flex:0 0 auto}
   .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
@@ -144,6 +147,14 @@
   </section>
 
   <section class="panel">
+    <div class="field" style="margin-bottom:14px"><label>フィルター</label><div class="chips" id="filters"></div></div>
+    <div class="row" style="border-top:1px solid var(--line)"><div class="lb"><span>コントラスト</span></div><div class="rng"><input id="fCon" type="range" min="60" max="160" value="100"><output id="fConOut">100</output></div></div>
+    <div class="row"><div class="lb"><span>明るさ</span></div><div class="rng"><input id="fBri" type="range" min="60" max="140" value="100"><output id="fBriOut">100</output></div></div>
+    <div class="row"><div class="lb"><span>彩度</span></div><div class="rng"><input id="fSat" type="range" min="0" max="200" value="100"><output id="fSatOut">100</output></div></div>
+    <div class="err" id="fWarn" style="margin-top:8px;background:#2A2618;color:#E8D9A0"></div>
+  </section>
+
+  <section class="panel">
     <div class="row"><div class="lb"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8.5"/></svg><span>1本あたり<small>全クリップに適用</small></span></div>
       <div class="seg" id="len"><button data-v="1">1秒</button><button data-v="2">2秒</button><button data-v="3" class="on">3秒</button></div></div>
     <div class="row"><div class="lb"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 12h18M12 5v14" opacity=".45"/></svg><span>サイズ</span></div>
@@ -185,6 +196,17 @@ const seek=(v,t)=>new Promise(res=>{const h=()=>{v.removeEventListener('seeked',
 $('date').value=isoDate(new Date());
 const TAGS=[['','なし'],['✈️','TRIP'],['🎬','VLOG'],['☀️','DAILY'],['🛋️','WEEKEND'],['🍽️','FOOD'],['☕','CAFE'],['🏠','FAMILY'],['🫶','FRIENDS'],['💐','DATE'],['🎉','EVENT'],['💼','WORK'],['🏃','WORKOUT'],['📷','MEMORY'],['✏️','その他']];
 let tagEmoji='';
+const FILTERS=[['なし',{c:100,b:100,s:100,x:''}],['くっきり',{c:118,b:102,s:110,x:''}],['ビビッド',{c:108,b:100,s:150,x:''}],['淡い',{c:88,b:108,s:85,x:''}],['フィルム',{c:106,b:96,s:90,x:'sepia(0.28)'}],['クール',{c:108,b:100,s:95,x:'hue-rotate(-8deg)'}],['モノクロ',{c:112,b:100,s:0,x:''}]];
+let fx='';
+const filterStr=()=>{const c=$('fCon').value,b=$('fBri').value,st=$('fSat').value;
+  if(c==100&&b==100&&st==100&&!fx)return 'none';return `contrast(${c}%) brightness(${b}%) saturate(${st}%) ${fx}`.trim();};
+FILTERS.forEach(([n,f],i)=>{const b=document.createElement('button');b.textContent=n;b.className=i===0?'on':'';
+  b.onclick=()=>{[...$('filters').children].forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    $('fCon').value=f.c;$('fBri').value=f.b;$('fSat').value=f.s;fx=f.x;syncF();previewDraw();};
+  $('filters').appendChild(b);});
+function syncF(){$('fConOut').textContent=$('fCon').value;$('fBriOut').textContent=$('fBri').value;$('fSatOut').textContent=$('fSat').value;}
+['fCon','fBri','fSat'].forEach(id=>$(id).oninput=()=>{syncF();previewDraw();});
+if(!('filter' in CanvasRenderingContext2D.prototype)){$('fWarn').style.display='block';$('fWarn').textContent='このブラウザはフィルターの書き出しに対応していません（Safariなど）。Chromeで開くと使えます。';}
 TAGS.forEach(([e,t],i)=>{const b=document.createElement('button');b.textContent=e?`${e} ${t}`:t;b.className=i===0?'on':'';
   b.onclick=()=>{[...$('tags').children].forEach(x=>x.classList.remove('on'));b.classList.add('on');
     $('tagCustom').style.display=t==='その他'?'block':'none';
@@ -270,7 +292,7 @@ function drawVideo(v){
   const W=canvas.width,H=canvas.height,vw=v.videoWidth,vh=v.videoHeight;
   ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
   const s=fitMode==='fill'?Math.max(W/vw,H/vh):Math.min(W/vw,H/vh);
-  const dw=vw*s,dh=vh*s;ctx.drawImage(v,(W-dw)/2,(H-dh)/2,dw,dh);
+  const dw=vw*s,dh=vh*s;ctx.filter=filterStr();ctx.drawImage(v,(W-dw)/2,(H-dh)/2,dw,dh);ctx.filter='none';
 }
 function drawTitle(){
   const W=canvas.width,H=canvas.height,base=Math.min(W,H);
