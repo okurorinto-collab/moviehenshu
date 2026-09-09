@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3秒クリップ</title>
+<style>
+  :root{--bg:#EEF0EC;--paper:#FFF;--ink:#1F2623;--ink-2:#5C6661;--line:#D6DBD6;--accent:#2F5D50;--accent-ink:#F4FAF7;--radius:14px}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  main{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+  h1{font-size:20px;font-weight:600;margin:4px 0 2px}
+  .sub{margin:0 0 18px;color:var(--ink-2);font-size:13px;line-height:1.6}
+  .stage{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;max-height:60vh;display:flex;align-items:center;justify-content:center;aspect-ratio:9/16;transition:aspect-ratio .2s}
+  .stage canvas{max-width:100%;max-height:100%;display:block}
+  .stage .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff;text-align:center;padding:24px;background:#20262A;cursor:pointer}
+  .empty strong{font-size:16px}.empty span{font-size:13px;opacity:.7;line-height:1.6}
+  .stage.has-video .empty{display:none}
+  .stage.busy::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.35)}
+  .progress{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.25);display:none}
+  .stage.busy .progress{display:block}.progress i{display:block;height:100%;width:0;background:#fff}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:14px}
+  .panel h2{font-size:13px;color:var(--ink-2);font-weight:500;margin:0 0 12px}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}.field:last-child{margin-bottom:0}
+  label{font-size:13px;color:var(--ink-2);display:flex;justify-content:space-between}label output{color:var(--ink)}
+  input[type=text],input[type=date]{font:inherit;font-size:16px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#FAFBFA;color:var(--ink);width:100%}
+  input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .toggle{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink)}.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{flex:1;padding:9px 0;font:inherit;font-size:14px;background:#FAFBFA;color:var(--ink-2);border:0;cursor:pointer}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--accent);color:var(--accent-ink)}
+  /* クリップ一覧 */
+  .clips{display:flex;flex-direction:column;gap:10px}
+  .clip{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:12px;background:#FAFBFA}
+  .clip.sel{border-color:var(--accent);background:#fff}
+  .clip img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:#000;cursor:pointer}
+  .clip .num{position:absolute;font-size:11px;color:#fff;background:rgba(0,0,0,.6);padding:1px 6px;border-radius:6px;margin:4px}
+  .clip .th{position:relative}
+  .clip .body{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .clip .body input[type=text]{font-size:15px;padding:7px 10px}
+  .clip .body .r{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--ink-2)}
+  .clip .body .r input[type=date]{font-size:13px;padding:5px 8px;width:auto}
+  .clip .body .r input[type=range]{flex:1}
+  .clip .ops{display:flex;flex-direction:column;gap:4px}
+  .ops button{width:32px;height:28px;border:1px solid var(--line);background:#fff;border-radius:7px;cursor:pointer;font-size:13px;color:var(--ink)}
+  .ops button:disabled{opacity:.3;cursor:default}
+  .mini{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content}
+  .mini button{padding:4px 10px;font:inherit;font-size:12px;background:#fff;color:var(--ink-2);border:0;cursor:pointer}
+  .mini button+button{border-left:1px solid var(--line)}
+  .mini button.on{background:var(--accent);color:var(--accent-ink)}
+  .clip .name{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .add{margin-top:10px;width:100%;padding:12px;border:1px dashed var(--line);border-radius:12px;background:transparent;font:inherit;font-size:14px;color:var(--ink-2);cursor:pointer}
+  .actions{display:flex;gap:10px;margin-top:14px}
+  button.big,a.btn{font:inherit;font-size:15px;font-weight:600;padding:14px 18px;border-radius:12px;border:0;cursor:pointer;flex:1;text-align:center;text-decoration:none}
+  .primary{background:var(--accent);color:var(--accent-ink)}.primary:disabled{opacity:.4;cursor:default}
+  .result{display:none;margin-top:14px}.result.show{display:block}
+  .result p{font-size:13px;color:var(--ink-2);margin:8px 0 0;word-break:break-all}
+  .err{color:#A33;font-size:13px;margin-top:10px;display:none}
+  .clip.loading img{opacity:.35}
+  .clip .spin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .clip .spin i{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .clip .state{font-size:12px;color:var(--ink-2)}
+  .notice{background:#FFF6DA;border:1px solid #E8D48A;color:#5C4A00;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.6;margin:0 0 14px;display:none}
+  .notice.show{display:block}
+  .add{position:relative;display:block;text-align:center}
+  #file{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>3秒クリップ</h1>
+  <p class="sub">動画をまとめて選ぶと、それぞれの冒頭を1〜3秒ずつ切り出して1本につなげます。できあがった動画の冒頭に日付とタイトルを白文字で重ねます。</p>
+
+  <div class="notice" id="notice">Claudeアプリ内のプレビューでは動画を選べないことがあります。右上のメニューからこのファイルを保存して、Safari / Chrome で開いてください。</div>
+
+  <div class="stage" id="stage">
+    <label class="empty" for="file"><strong>動画を選ぶ</strong><span>タップして選択、またはドロップ<br>複数まとめて選べます</span></label>
+    <canvas id="canvas" style="display:none"></canvas>
+    <div class="progress"><i id="bar"></i></div>
+  </div>
+  
+
+  <div class="panel">
+    <h2>クリップ（並び順＝つなぐ順番／数字は切り出す秒数）</h2>
+    <div class="clips" id="clips"></div>
+    <label class="add" for="file">＋ 動画を追加<input id="file" type="file" accept="video/*,.mov,.mp4,.m4v" multiple></label>
+  </div>
+
+  <div class="panel">
+    <h2>冒頭のタイトル</h2>
+    <div class="row">
+      <div class="field"><label>日付</label><input id="date" type="date"></div>
+      <div class="field"><label>タイトル</label><input id="title" type="text" placeholder="今日のできごと" maxlength="30"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>書き出し設定</h2>
+    <div class="field"><label>1本あたりの長さ（全部に適用）</label>
+      <div class="seg" id="len"><button data-v="1">1秒</button><button data-v="2">2秒</button><button data-v="3" class="on">3秒</button></div></div>
+    <div class="row">
+      <div class="field"><label>サイズ</label>
+        <div class="seg" id="ratio"><button data-v="16:9">16:9</button><button data-v="9:16" class="on">9:16</button><button data-v="1:1">1:1</button></div></div>
+      <div class="field"><label>収め方</label>
+        <div class="seg" id="fit"><button data-v="fill" class="on">Fill</button><button data-v="fit">Fit</button></div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>タイトル表示時間 <output id="durOut">1.0秒</output></label><input id="dur" type="range" min="0.3" max="3" step="0.1" value="1"></div>
+      <div class="field"><label>文字サイズ <output id="sizeOut">中</output></label><input id="size" type="range" min="1" max="3" step="1" value="2"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label class="toggle"><input id="showDate" type="checkbox" checked> 日付を入れる</label></div>
+      <div class="field"><label class="toggle"><input id="audio" type="checkbox" checked> 音声を含める</label></div>
+    </div>
+  </div>
+
+  <div class="actions"><button class="big primary" id="export" disabled>書き出す</button></div>
+  <div class="err" id="err"></div>
+
+  <div class="result" id="result">
+    <video id="out" controls playsinline style="width:100%;border-radius:var(--radius);background:#000"></video>
+    <div class="actions"><a class="btn primary" id="dl" download>保存する</a></div>
+    <p id="meta"></p>
+  </div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const stage=$('stage'),canvas=$('canvas'),ctx=canvas.getContext('2d'),fileIn=$('file');
+let CLIP=3; const FONT='"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif';
+const SIZES={'16:9':[1920,1080],'9:16':[1080,1920],'1:1':[1080,1080]};
+let clips=[], selected=-1, recording=false, ratio='9:16', fitMode='fill', audioCtx=null, audioDest=null;
+
+const isoDate=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const prettyDate=v=>v?v.replaceAll('-','.'):'';
+const seek=(v,t)=>new Promise(res=>{const h=()=>{v.removeEventListener('seeked',h);res()};v.addEventListener('seeked',h);v.currentTime=t;});
+
+function setCanvasSize(){const [w,h]=SIZES[ratio];canvas.width=w;canvas.height=h;stage.style.aspectRatio=`${w}/${h}`;}
+setCanvasSize();
+
+/* ---- ファイル追加 ---- */
+fileIn.onchange=()=>{[...fileIn.files].forEach(addClip);fileIn.value='';};
+['dragover','dragenter'].forEach(e=>stage.addEventListener(e,ev=>ev.preventDefault()));
+stage.addEventListener('drop',ev=>{ev.preventDefault();[...ev.dataTransfer.files].filter(f=>f.type.startsWith('video/')).forEach(addClip);});
+
+function addClip(file){
+  const v=document.createElement('video'); v.playsInline=true; v.setAttribute('playsinline',''); v.preload='auto'; v.muted=true;
+  v.src=URL.createObjectURL(file);
+  const c={id:Math.random().toString(36).slice(2),file,video:v,len:CLIP,dur:0,thumb:'',ready:false};
+  if(clips.length===0&&file.lastModified) $('date').value=isoDate(new Date(file.lastModified));
+  clips.push(c); render();
+  v.onloadedmetadata=async()=>{
+    c.dur=v.duration; await seek(v,0);
+    const t=document.createElement('canvas');t.width=t.height=112;
+    const s=Math.max(112/v.videoWidth,112/v.videoHeight);
+    t.getContext('2d').drawImage(v,(112-v.videoWidth*s)/2,(112-v.videoHeight*s)/2,v.videoWidth*s,v.videoHeight*s);
+    c.thumb=t.toDataURL('image/jpeg',.7); c.ready=true;
+    if(selected<0) selected=clips.indexOf(c);
+    render(); preview();
+  };
+  v.onerror=()=>{showErr(`「${file.name}」は読み込めませんでした。`); clips=clips.filter(x=>x!==c); render();};
+}
+
+/* ---- クリップ一覧 ---- */
+function render(){
+  const box=$('clips'); box.innerHTML='';
+  clips.forEach((c,i)=>{
+    const el=document.createElement('div'); el.className='clip'+(i===selected?' sel':'')+(c.ready?'':' loading');
+    el.innerHTML=`
+      <div class="th"><span class="num">${i+1}</span><img src="${c.thumb}" alt="">${c.ready?'':'<div class="spin"><i></i></div>'}</div>
+      <div class="body">
+        <div class="name">${c.file.name}</div>
+        ${c.ready?'':`<div class="state">読み込み中… ${(c.file.size/1024/1024).toFixed(1)} MB</div>`}
+        <div class="mini">${[1,2,3].map(n=>`<button data-v="${n}" class="${c.len===n?'on':''}" ${c.dur&&c.dur<n?'disabled':''}>${n}秒</button>`).join('')}</div>
+      </div>
+      <div class="ops">
+        <button title="上へ" ${i===0?'disabled':''}>↑</button>
+        <button title="下へ" ${i===clips.length-1?'disabled':''}>↓</button>
+        <button title="削除">×</button>
+      </div>`;
+    const [up,down,del]=el.querySelectorAll('.ops button');
+    el.querySelector('img').onclick=()=>{selected=i;render();preview();};
+    el.querySelectorAll('.mini button').forEach(b=>b.onclick=()=>{c.len=+b.dataset.v;render();});
+    up.onclick=()=>{[clips[i-1],clips[i]]=[clips[i],clips[i-1]];selected=i-1;render();};
+    down.onclick=()=>{[clips[i+1],clips[i]]=[clips[i],clips[i+1]];selected=i+1;render();};
+    del.onclick=()=>{URL.revokeObjectURL(c.video.src);clips.splice(i,1);selected=Math.min(selected,clips.length-1);render();preview();};
+    box.appendChild(el);
+  });
+  const has=clips.length>0;
+  stage.classList.toggle('has-video',has); canvas.style.display=has?'block':'none';
+  $('export').disabled=!clips.some(c=>c.ready)||recording;
+  const tot=clips.reduce((a,c)=>a+Math.min(c.len,c.dur||c.len),0);
+  $('export').textContent=clips.length>1?`${clips.length}本をつなげて書き出す（${tot.toFixed(0)}秒）`:`${tot.toFixed(0)}秒で書き出す`;
+}
+
+/* ---- 描画 ---- */
+function drawVideo(v){
+  const W=canvas.width,H=canvas.height,vw=v.videoWidth,vh=v.videoHeight;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+  const s=fitMode==='fill'?Math.max(W/vw,H/vh):Math.min(W/vw,H/vh);
+  const dw=vw*s,dh=vh*s;
+  ctx.drawImage(v,(W-dw)/2,(H-dh)/2,dw,dh);
+}
+function drawTitle(){
+  const W=canvas.width,H=canvas.height,base=Math.min(W,H);
+  const titleSize=Math.round(base*[0.055,0.075,0.1][$('size').value-1]),dateSize=Math.round(titleSize*0.55);
+  const t=$('title').value.trim(),d=$('showDate').checked?prettyDate($('date').value):'';
+  if(!t&&!d)return;
+  ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';
+  ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=base*0.02;ctx.shadowOffsetY=base*0.004;
+  const gap=titleSize*0.45,total=(d?dateSize:0)+(d&&t?gap:0)+(t?titleSize:0);
+  let y=H/2-total/2;
+  if(d){ctx.font=`500 ${dateSize}px ${FONT}`;ctx.fillText(d,W/2,y+dateSize/2);y+=dateSize+gap;}
+  if(t){ctx.font=`600 ${titleSize}px ${FONT}`;ctx.fillText(t,W/2,y+titleSize/2,W*0.9);}
+  ctx.restore();
+}
+function preview(){ if(recording)return; const c=clips[selected]; if(!c||!c.ready){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);return;} drawVideo(c.video); if(selected===0)drawTitle(); }
+
+/* ---- 設定UI ---- */
+function seg(id,cb){$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b.dataset.v);});}
+seg('ratio',v=>{ratio=v;setCanvasSize();preview();});
+seg('fit',v=>{fitMode=v;preview();});
+seg('len',v=>{CLIP=+v;clips.forEach(c=>c.len=CLIP);render();});
+$('title').oninput=preview;$('date').oninput=preview;
+$('date').value=isoDate(new Date());
+$('dur').oninput=()=>$('durOut').textContent=(+$('dur').value).toFixed(1)+'秒';
+$('size').oninput=()=>{$('sizeOut').textContent=['小','中','大'][$('size').value-1];preview();};
+$('showDate').onchange=preview;
+
+/* ---- 書き出し ---- */
+$('export').onclick=async()=>{
+  const list=clips.filter(c=>c.ready); if(!list.length||recording)return;
+  recording=true;showErr('');$('export').disabled=true;stage.classList.add('busy');$('bar').style.width='0';$('result').classList.remove('show');
+  const titleDur=+$('dur').value, total=list.reduce((a,c)=>a+Math.min(c.len,c.dur),0);
+  const stream=canvas.captureStream(30);
+  if($('audio').checked){
+    try{
+      if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();audioDest=audioCtx.createMediaStreamDestination();}
+      if(audioCtx.state==='suspended')await audioCtx.resume();
+      list.forEach(c=>{ if(!c.node){c.node=audioCtx.createMediaElementSource(c.video);c.node.connect(audioDest);} c.video.muted=false;c.video.volume=1; });
+      audioDest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+    }catch(e){}
+  }
+  const mime=['video/mp4;codecs=avc1','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(m=>MediaRecorder.isTypeSupported(m))||'';
+  const rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:8_000_000}:undefined);
+  const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  const finished=new Promise(r=>rec.onstop=r);
+
+  await seek(list[0].video,0); drawVideo(list[0].video); drawTitle();
+  rec.start(100);
+  let done=0;
+  try{
+    for(let i=0;i<list.length;i++){
+      const c=list[i],v=c.video;
+      const L=Math.min(c.len,c.dur); if(i>0) await seek(v,0);
+      await v.play();
+      await new Promise(res=>{
+        const tick=()=>{
+          const el=v.currentTime;
+          if(el>=L||v.ended){v.pause();res();return;}
+          drawVideo(v); if(i===0&&el<titleDur)drawTitle();
+          $('bar').style.width=Math.min(100,(done+el)/total*100)+'%';
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      done+=L;
+    }
+  }catch(e){showErr('再生を開始できませんでした。もう一度お試しください。');}
+  rec.stop(); await finished; $('bar').style.width='100%';
+
+  const blob=new Blob(chunks,{type:rec.mimeType||mime});
+  const ext=(rec.mimeType||mime).includes('mp4')?'mp4':'webm';
+  const url=URL.createObjectURL(blob);
+  const safe=($('title').value.trim()||'clip').replace(/[\\/:*?"<>|]/g,'_');
+  const name=`${$('date').value}_${safe}${list.length>1?`_${list.length}本`:''}_${ratio.replace(':','x')}.${ext}`;
+  $('out').src=url;$('dl').href=url;$('dl').download=name;
+  $('meta').textContent=`${name}（${(blob.size/1024/1024).toFixed(1)} MB）`;
+  $('result').classList.add('show');
+
+  list.forEach(c=>{c.video.muted=true;});
+  recording=false;stage.classList.remove('busy');render();preview();
+};
+
+try{ if(window.self!==window.top) $('notice').classList.add('show'); }catch(e){ $('notice').classList.add('show'); }
+function showErr(m){$('err').textContent=m;$('err').style.display=m?'block':'none';}
+if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream) showErr('このブラウザは動画の書き出しに対応していません。Chrome または Safari の最新版でお試しください。');
+</script>
+</body>
+</html>
